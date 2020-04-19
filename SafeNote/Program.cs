@@ -4,77 +4,73 @@ using System.Collections.Generic;
 
 namespace SafeNote
 {
-    public class Cryptor
+    class Cryptor
     {
-
         /// <summary>
-        /// This function encrypts text with key
+        /// Method for encrypting text
         /// </summary>
-        /// <param name="text"></param>
-        /// <param name="key"></param>
-        /// <returns>strings[] encrypted text</returns>
-        public static string[] Encrypt(in string[] text, in string key)
+        /// <param name="text"> text that need to encrypt</param>
+        /// <param name="cipher"> cipher that we use</param>
+        /// <returns></returns>
+        public static string[] Encrypt(in string[] text, ICipher cipher)
         {
             List<string> strs = new List<string>();
             foreach (var s in text)
-                strs.Add(EncryptString(s, key));
+                strs.Add(cipher.Encrypt(s));
             return strs.ToArray();
         }
         /// <summary>
-        /// This function decrypts text with key
+        /// Method for decrypting text
         /// </summary>
-        /// <param name="text"></param>
-        /// <param name="key"></param>
-        /// <returns>strings[] decrypted text</returns>
-        public static string[] Decrypt(in string[] text, in string key)
+        /// <param name="text">text that need to dencrypt</param>
+        /// <param name="cipher"> cipher that we use</param>
+        /// <returns></returns>
+        public static string[] Decrypt(in string[] text, ICipher cipher)
         {
             List<string> strs = new List<string>();
             foreach (var s in text)
-                strs.Add(DecryptString(s, key));
+                strs.Add(cipher.Decrypt(s));
             return strs.ToArray();
         }
-        /// <summary>
-        /// Ecncrypts string with key
-        /// </summary>
-        /// <param name="str"></param>
-        /// <param name="key"></param>
-        /// <returns>encrypted string</returns>
-        public static string EncryptString(in string str, in string key)
-        {
-            int count = 0;
-            char[] encrypted_text = str.ToCharArray();
-            for (int i = 0; i < encrypted_text.Length; i++)
-            {
-                encrypted_text[i] += (char)(count * 17 + key[count]);
-                if (++count == key.Length)
-                    count = 0;
-            }
-            return new string(encrypted_text);
-        }
-        /// <summary>Decncrypts string with key</summary>
-        /// <param name="text">The text.</param>
-        /// <param name="key">The key.</param>
-        /// <returns>Decrypted string</returns>
-        public static string DecryptString(in string text, in string key)
-        {
-            int count = 0;
-            char[] decrypted_text = text.ToCharArray();
-            for (int i = 0; i < decrypted_text.Length; i++)
-            {
-                decrypted_text[i] -= (char)(count * 17 + key[count]);
-                if (++count == key.Length)
 
-                    count = 0;
-            }
-            return new string(decrypted_text);
-        }
     }
 
-    public class FileManager
+    /// <summary>
+    /// Class for managing files and directories
+    /// </summary>
+    class FileManager
     {
-        /// <summary>Reads the text from file.</summary>
-        /// <param name="filename">The filename.</param>
-        /// <returns>Text in strings[]</returns>
+        private const string DEFAULT_DIRECTORY = @"C:\SafeNotes";
+        public string WorkDirectory { get; set; }
+        public string[] GetFilenames()
+        {
+            while (true)
+            {
+                Console.WriteLine("Enter path to work directory or tap ENTER to use default directory");
+                string directory_name = Console.ReadLine();
+                if (directory_name.Length == 0) 
+                { 
+                    directory_name = DEFAULT_DIRECTORY;
+                }
+
+                if (Directory.Exists(directory_name))
+                {
+                    WorkDirectory = directory_name;
+                    return Directory.GetFiles(directory_name);
+                }
+                else if (directory_name == DEFAULT_DIRECTORY)
+                {
+                    WorkDirectory = DEFAULT_DIRECTORY;
+                    Directory.CreateDirectory(DEFAULT_DIRECTORY);
+                    return Directory.GetFiles(directory_name);
+                }
+                else
+                {
+                    Console.WriteLine("Directory is not exitsts");
+                }
+            }
+        }
+
         public static string[] ReadTextFromFile(string filename)
         {
             List<string> strs = new List<string>();
@@ -85,15 +81,7 @@ namespace SafeNote
             }
             return strs.ToArray();
         }
-        /// <summary>Gets the filenames.</summary>
-        /// <returns>Filenames in strings[]</returns>
-        public static string[] GetFilenames()
-        {
-            return Directory.GetFiles(@"C:\Users\Halasas\Desktop\Cryptor");
-        }
-        /// <summary>Writes the text to file.</summary>
-        /// <param name="strs">  The text.</param>
-        /// <param name="filename">The filename.</param>
+
         public static void WriteTextToFile(string[] strs, string filename)
         {
             using (StreamWriter sw = new StreamWriter(filename))
@@ -104,39 +92,48 @@ namespace SafeNote
         }
     }
 
-    public class SafeNote
+    public class SafeNoteUI
     {
         static void Main(string[] args)
         {
-
             //-----------------------INPUT------------------------//
-            int file_id = -1;
-            string key;
-            string filename;
-            int count = 0;
-            string[] files = FileManager.GetFilenames();
 
-            Console.WriteLine("Choose File from list or create new");
+
+            FileManager fileManager = new FileManager();
+            string[] files = fileManager.GetFilenames();
+            
+            Console.WriteLine("Choose Note from list or create new one");
+            int count = 0;
             foreach (var s in files)
                 Console.WriteLine("{0,3}|   {1}", count++, s);
-            Console.WriteLine("{0,3}|   new Note", files.Length);
-            Console.WriteLine("Write <file_id> <key> to openfile", files.Length);
+            Console.WriteLine("{0,3}|   new Note", count);
+            Console.WriteLine("Write <file_id> <key> to open Note", files.Length);
 
-            while (!ParseInputForFileChoosing(Console.ReadLine(), out file_id, out key)
-                || file_id < 0 ||
-                file_id > files.Length) ;
+            int file_id = -1;
+            int key;
+            string filename;
+            while (!ParseInputForFileChoosing(Console.ReadLine(), out file_id, out key) ||
+                file_id < 0 || file_id > files.Length);
+
             if (file_id == files.Length)
             {
-                using (File.Create(filename = @"C:\Users\Halasas\Desktop\Cryptor\" + new Random().Next().ToString())) { };
+                using (File.Create(filename = fileManager.WorkDirectory + '\\' 
+                    + DateTime.Now.Year + '_'+ DateTime.Now.Month+ '_'+ DateTime.Now.Day + '_'+
+                    + DateTime.Now.Hour + '_'+ DateTime.Now.Minute+ '_'+ DateTime.Now.Second)) { };
             }
             else
+            {
                 filename = files[file_id];
+            }
             //-----------------------EDITOR------------------------//
-            List<string> text = new List<string>(Cryptor.Decrypt(FileManager.ReadTextFromFile(filename), key));
+            ICipher cipher = new CeasarCipher(key);
+            List<string> text = new List<string>(Cryptor.Decrypt(FileManager.ReadTextFromFile(filename), cipher));
+            bool delete = false;
             while (true)
             {
                 Console.WriteLine(filename);
                 Console.WriteLine("e - save and exit\n" +
+                    "x - delete this note" +
                     "d <num_line> - delete string\n" +
                     "i <num_line> <string> - insert string\n" +
                     "n <string> - new string");
@@ -150,6 +147,11 @@ namespace SafeNote
                 {
                     if (mode == 'e')
                         break;
+                    if (mode == 'x')
+                    {
+                        delete = true;
+                        break;
+                    }
                     if (mode == 'd')
                         text.RemoveAt(num_line);
                     if (mode == 'n')
@@ -158,13 +160,18 @@ namespace SafeNote
                         text.Insert(num_line, str);
                 }
             }
-            FileManager.WriteTextToFile(Cryptor.Encrypt(text.ToArray(), key), filename);
+            if (!delete)
+                FileManager.WriteTextToFile(Cryptor.Encrypt(text.ToArray(), cipher), filename);
+            else
+                File.Delete(filename);
         }
         static bool ParseInputForEditor(in string text, out char mode, out int num_line, out string str)
         {
             mode = text[0];
             num_line = 0;
             str = "";
+            if (mode == 'x')
+                return true;
             if (mode == 'e')
                 return true;
             if (mode == 'n')
@@ -181,10 +188,10 @@ namespace SafeNote
                 return true;
             return false;
         }
-        static bool ParseInputForFileChoosing(in string str, out int file_id, out string key)
+        static bool ParseInputForFileChoosing(in string str, out int file_id, out int key)
         {
             string[] strs = str.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            key = strs[1];
+            key = Int32.Parse(strs[1]);
             if (!int.TryParse(strs[0], out file_id))
                 return false;
             return true;
