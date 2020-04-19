@@ -11,6 +11,11 @@ namespace SafeNote
         {
             this.key = key;
         }
+        /// <summary>
+        /// Bill Cipher is here
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
         public string Decrypt(in string str)
         {
             StringBuilder stringBuilder = new StringBuilder();
@@ -21,6 +26,11 @@ namespace SafeNote
             return stringBuilder.ToString();
         }
 
+        /// <summary>
+        /// And here
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
         public string Encrypt(in string str)
         {
             StringBuilder stringBuilder = new StringBuilder();
