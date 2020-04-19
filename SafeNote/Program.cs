@@ -48,8 +48,8 @@ namespace SafeNote
             {
                 Console.WriteLine("Enter path to work directory or tap ENTER to use default directory");
                 string directory_name = Console.ReadLine();
-                if (directory_name.Length == 0) 
-                { 
+                if (directory_name.Length == 0)
+                {
                     directory_name = DEFAULT_DIRECTORY;
                 }
 
@@ -101,32 +101,40 @@ namespace SafeNote
 
             FileManager fileManager = new FileManager();
             string[] files = fileManager.GetFilenames();
-            
+
             Console.WriteLine("Choose Note from list or create new one");
-            int count = 0;
+            Console.WriteLine("{0,3}) - new Note <name/optional>", 0);
+            int count = 1;
             foreach (var s in files)
-                Console.WriteLine("{0,3}|   {1}", count++, s);
-            Console.WriteLine("{0,3}|   new Note", count);
-            Console.WriteLine("Write <file_id> <key> to open Note", files.Length);
+                Console.WriteLine("{0,3} - {1}", count++, s);
+            Console.WriteLine("Write <file_id> to open Note", files.Length);
 
             int file_id = -1;
-            int key;
-            string filename;
-            while (!ParseInputForFileChoosing(Console.ReadLine(), out file_id, out key) ||
-                file_id < 0 || file_id > files.Length);
+            string key = "";
+            string cipherName = "";
+            string filename = "";
+            while (!ParseInputForFileChoosing(Console.ReadLine(), out file_id, ref key, ref cipherName, ref filename) ||
+                file_id < 0 || file_id > files.Length) ;
 
-            if (file_id == files.Length)
+            if (file_id == 0)
             {
-                using (File.Create(filename = fileManager.WorkDirectory + '\\' 
-                    + DateTime.Now.Year + '_'+ DateTime.Now.Month+ '_'+ DateTime.Now.Day + '_'+
-                    + DateTime.Now.Hour + '_'+ DateTime.Now.Minute+ '_'+ DateTime.Now.Second)) { };
+                if (filename == "")
+                    filename = "" + DateTime.Now.Year + '_' + DateTime.Now.Month + '_' + DateTime.Now.Day + '_' +
+                                  + DateTime.Now.Hour + '_' + DateTime.Now.Minute + '_' + DateTime.Now.Second;
+                using (File.Create(fileManager.WorkDirectory + '\\'+ filename)) { };
             }
             else
             {
-                filename = files[file_id];
+                filename = files[file_id - 1];
             }
             //-----------------------EDITOR------------------------//
-            ICipher cipher = new CeasarCipher(key);
+            ICipher cipher;
+            if (cipherName == "ceasar")
+                cipher = new CeasarCipher(Int32.Parse(key));
+            else if (cipherName == "bill")
+                cipher = new BillCipher(Int32.Parse(key));
+            else
+                cipher = new CeasarCipher(Int32.Parse(key));
             List<string> text = new List<string>(Cryptor.Decrypt(FileManager.ReadTextFromFile(filename), cipher));
             bool delete = false;
             while (true)
@@ -188,12 +196,17 @@ namespace SafeNote
                 return true;
             return false;
         }
-        static bool ParseInputForFileChoosing(in string str, out int file_id, out int key)
+        static bool ParseInputForFileChoosing(in string str, out int file_id, ref string key, ref string cipher, ref string filename)
         {
             string[] strs = str.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            key = Int32.Parse(strs[1]);
             if (!int.TryParse(strs[0], out file_id))
                 return false;
+            if (strs.Length < 3)
+                return false;
+            key = strs[1];
+            cipher = strs[2];
+            if (strs.Length == 4 && file_id == 0)
+                filename = strs[3];
             return true;
         }
 
