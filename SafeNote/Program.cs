@@ -4,77 +4,27 @@ using System.Collections.Generic;
 
 namespace SafeNote
 {
-    public class Cryptor
+    class Cryptor
     {
-
-        /// <summary>
-        /// This function encrypts text with key
-        /// </summary>
-        /// <param name="text"></param>
-        /// <param name="key"></param>
-        /// <returns>strings[] encrypted text</returns>
-        public static string[] Encrypt(in string[] text, in string key)
+        public static string[] Encrypt(in string[] text, ICipher cipher)
         {
             List<string> strs = new List<string>();
             foreach (var s in text)
-                strs.Add(EncryptString(s, key));
+                strs.Add(cipher.Encrypt(s));
             return strs.ToArray();
         }
-        /// <summary>
-        /// This function decrypts text with key
-        /// </summary>
-        /// <param name="text"></param>
-        /// <param name="key"></param>
-        /// <returns>strings[] decrypted text</returns>
-        public static string[] Decrypt(in string[] text, in string key)
+        public static string[] Decrypt(in string[] text, ICipher cipher)
         {
             List<string> strs = new List<string>();
             foreach (var s in text)
-                strs.Add(DecryptString(s, key));
+                strs.Add(cipher.Decrypt(s));
             return strs.ToArray();
         }
-        /// <summary>
-        /// Ecncrypts string with key
-        /// </summary>
-        /// <param name="str"></param>
-        /// <param name="key"></param>
-        /// <returns>encrypted string</returns>
-        public static string EncryptString(in string str, in string key)
-        {
-            int count = 0;
-            char[] encrypted_text = str.ToCharArray();
-            for (int i = 0; i < encrypted_text.Length; i++)
-            {
-                encrypted_text[i] += (char)(count * 17 + key[count]);
-                if (++count == key.Length)
-                    count = 0;
-            }
-            return new string(encrypted_text);
-        }
-        /// <summary>Decncrypts string with key</summary>
-        /// <param name="text">The text.</param>
-        /// <param name="key">The key.</param>
-        /// <returns>Decrypted string</returns>
-        public static string DecryptString(in string text, in string key)
-        {
-            int count = 0;
-            char[] decrypted_text = text.ToCharArray();
-            for (int i = 0; i < decrypted_text.Length; i++)
-            {
-                decrypted_text[i] -= (char)(count * 17 + key[count]);
-                if (++count == key.Length)
 
-                    count = 0;
-            }
-            return new string(decrypted_text);
-        }
     }
 
-    public class FileManager
+    class FileManager
     {
-        /// <summary>Reads the text from file.</summary>
-        /// <param name="filename">The filename.</param>
-        /// <returns>Text in strings[]</returns>
         public static string[] ReadTextFromFile(string filename)
         {
             List<string> strs = new List<string>();
@@ -85,15 +35,10 @@ namespace SafeNote
             }
             return strs.ToArray();
         }
-        /// <summary>Gets the filenames.</summary>
-        /// <returns>Filenames in strings[]</returns>
         public static string[] GetFilenames()
         {
             return Directory.GetFiles(@"C:\Users\Halasas\Desktop\Cryptor");
         }
-        /// <summary>Writes the text to file.</summary>
-        /// <param name="strs">  The text.</param>
-        /// <param name="filename">The filename.</param>
         public static void WriteTextToFile(string[] strs, string filename)
         {
             using (StreamWriter sw = new StreamWriter(filename))
@@ -104,14 +49,13 @@ namespace SafeNote
         }
     }
 
-    public class SafeNote
+    public class SafeNoteUI
     {
         static void Main(string[] args)
         {
-
             //-----------------------INPUT------------------------//
             int file_id = -1;
-            string key;
+            int key;
             string filename;
             int count = 0;
             string[] files = FileManager.GetFilenames();
@@ -122,17 +66,20 @@ namespace SafeNote
             Console.WriteLine("{0,3}|   new Note", files.Length);
             Console.WriteLine("Write <file_id> <key> to openfile", files.Length);
 
-            while (!ParseInputForFileChoosing(Console.ReadLine(), out file_id, out key)
-                || file_id < 0 ||
+            while (!ParseInputForFileChoosing(Console.ReadLine(), out file_id, out key) ||
+                file_id < 0 ||
                 file_id > files.Length) ;
             if (file_id == files.Length)
             {
                 using (File.Create(filename = @"C:\Users\Halasas\Desktop\Cryptor\" + new Random().Next().ToString())) { };
             }
-            else
+            else 
+            { 
                 filename = files[file_id];
+            }
             //-----------------------EDITOR------------------------//
-            List<string> text = new List<string>(Cryptor.Decrypt(FileManager.ReadTextFromFile(filename), key));
+            ICipher cipher = new CeasarCipher(key);
+            List<string> text = new List<string>(Cryptor.Decrypt(FileManager.ReadTextFromFile(filename), cipher));
             while (true)
             {
                 Console.WriteLine(filename);
@@ -158,7 +105,7 @@ namespace SafeNote
                         text.Insert(num_line, str);
                 }
             }
-            FileManager.WriteTextToFile(Cryptor.Encrypt(text.ToArray(), key), filename);
+            FileManager.WriteTextToFile(Cryptor.Encrypt(text.ToArray(), cipher), filename);
         }
         static bool ParseInputForEditor(in string text, out char mode, out int num_line, out string str)
         {
@@ -181,10 +128,10 @@ namespace SafeNote
                 return true;
             return false;
         }
-        static bool ParseInputForFileChoosing(in string str, out int file_id, out string key)
+        static bool ParseInputForFileChoosing(in string str, out int file_id, out int key)
         {
             string[] strs = str.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            key = strs[1];
+            key = Int32.Parse(strs[1]);
             if (!int.TryParse(strs[0], out file_id))
                 return false;
             return true;
