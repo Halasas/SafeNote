@@ -6,6 +6,12 @@ namespace SafeNote
 {
     class Cryptor
     {
+        /// <summary>
+        /// Method for encrypting text
+        /// </summary>
+        /// <param name="text"> text that need to encrypt</param>
+        /// <param name="cipher"> cipher that we use</param>
+        /// <returns></returns>
         public static string[] Encrypt(in string[] text, ICipher cipher)
         {
             List<string> strs = new List<string>();
@@ -13,6 +19,12 @@ namespace SafeNote
                 strs.Add(cipher.Encrypt(s));
             return strs.ToArray();
         }
+        /// <summary>
+        /// Method for decrypting text
+        /// </summary>
+        /// <param name="text">text that need to dencrypt</param>
+        /// <param name="cipher"> cipher that we use</param>
+        /// <returns></returns>
         public static string[] Decrypt(in string[] text, ICipher cipher)
         {
             List<string> strs = new List<string>();
@@ -23,6 +35,9 @@ namespace SafeNote
 
     }
 
+    /// <summary>
+    /// Class for managing files and directories
+    /// </summary>
     class FileManager
     {
         private const string DEFAULT_DIRECTORY = @"C:\SafeNotes";
