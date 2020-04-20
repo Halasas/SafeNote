@@ -131,6 +131,8 @@ namespace SafeNote
             ICipher cipher;
             if (cipherName == "ceasar")
                 cipher = new CeasarCipher(Int32.Parse(key));
+            else if (cipherName == "ceasar")
+                cipher = new SmartCeasarCipher(key);
             else if (cipherName == "bill")
                 cipher = new BillCipher(Int32.Parse(key));
             else

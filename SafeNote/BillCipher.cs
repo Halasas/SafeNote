@@ -36,7 +36,7 @@ namespace SafeNote
             StringBuilder stringBuilder = new StringBuilder();
             for (int i = 0; i < key; i++)
             {
-                stringBuilder.Append("Bill");
+                stringBuilder.Append("BillIsHere");
             }
             return stringBuilder.ToString();
         }

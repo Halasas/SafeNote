@@ -1,0 +1,6 @@
+[submodule "Introduction-in-OOP"]
+	path = Introduction-in-OOP
+	url = https://github.com/Halasas/Introduction-in-OOP.git
+[submodule "cpp-course-homeworks"]
+	path = cpp-course-homeworks
+	url = https://github.com/Halasas/cpp-course-homeworks.git
